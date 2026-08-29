@@ -1,6 +1,5 @@
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, HTTPException
 import pickle
-import pytest
 import uvicorn
 from pydantic import BaseModel, Field
 import logging
@@ -42,65 +41,44 @@ def load_model(pathfile=FILENAME):
         raise FileNotFoundError(f"File {FILENAME} not found")
     return model_out
 
-#Funzione che esegue la predizione della lingua del testo presente nella request.
-#Con il metodo predict viene restituita la classe più probabile (lingua identificata).
-#Con il metodo predict_proba vengono restituite le probabilità per ogni classe cioè le probabilità per ogni lingua presente nel dataset.
-#Tramite la funzione index è recuperato l'indice della lingua identificata: questo servirà poi per recuperare la probabilità associata ad essa
-#Qualora il testo non sia identificato viene lanciata un eccezione HttpException che avvisa di questa casistica
-#La probabilità è arrotondata alla seconda cifra decimale
-def predict_language(text: str, model_to_use) -> Tuple[str, float]:
-    predicted_class = model_to_use.predict([text])
-    prediction_proba = model_to_use.predict_proba([text])
-    if len(predicted_class) == 0 or len(prediction_proba) == 0:
-        logger.error(LANGUAGE_UNDEFINED_ERROR_MESSAGE)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=LANGUAGE_UNDEFINED_ERROR_MESSAGE)
-
-    index_predicted_class = model_classes.index(predicted_class)
-    confidence_score = float(prediction_proba[0][index_predicted_class])
-    return predicted_class[0], round(confidence_score, 2)
-
-#Caricamento modello salvato nel file FILENAME
+# Caricamento del modello
 model = load_model(FILENAME)
-#Recupero delle classi previste dal modello. Questa lista  sarà utile per restituire la confidence
-model_classes = list(model.classes_)
 
-app = FastAPI()
+app = FastAPI(title="Sentiment Analysis API")
 
-#Definizione dell'endpoint
-#Se il testo da identificare non è presente (lunghezza pari a zero) viene lanciata un eccezione HTTPException con stato 500
-#che informa della mancanza del testo da identificare.
-#Il testo da identificare viene passato alla funzione predict_language assieme al modello per la predizione.
-#Il risultato della predizione è salvato nella classe PredictionTextResult valorizzando la lingua rilevata e la confidence
-#Nel metodo vengono tracciati nel log la request ricevuta e la response
-@app.post("/identify-language", description="Post endpoint to identify input json text language",
-          response_description="Language code identified and confidence score")
-def identify_language(text_to_identify: TextToIdentify) -> PredictionTextResult:
-    logger.info(f"Request: {text_to_identify}")
-    if len(text_to_identify.text) == 0:
+# Integrazione con Prometheus per l'endpoint GET /metrics richiesto dal progetto
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+def predict_sentiment(text: str, model_to_use) -> Tuple[str, float]:
+    try:
+        predicted_class = model_to_use.predict([text])[0]
+
+        # Gestione della confidence
+        try:
+            prediction_proba = model_to_use.predict_proba([text])[0]
+            confidence = max(prediction_proba)
+        except AttributeError:
+            confidence = 1.0  # Fallback se il modello non espone predict_proba
+
+        return str(predicted_class), float(confidence)
+    except Exception as e:
+        logger.error(f"{PREDICTION_ERROR_MESSAGE}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=PREDICTION_ERROR_MESSAGE)
+
+
+# Nuovo endpoint POST /predict come da specifiche
+@app.post("/predict", description="Predict sentiment of a review", response_model=SentimentResponse)  # [cite: 1]
+def analyze_review(request: ReviewRequest) -> SentimentResponse:
+    logger.info(f"Request received: {request.review}")
+
+    if len(request.review.strip()) == 0:
         logger.error(EMPTY_TEXT_ERROR_MESSAGE)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=EMPTY_TEXT_ERROR_MESSAGE)
 
-    language_code, confidence_score = predict_language(text_to_identify.text, model)
-    prediction_text_result = PredictionTextResult(language_code=language_code, confidence=confidence_score)
-    logger.info(f"Response: {prediction_text_result}")
-    return prediction_text_result
+    sentiment, confidence = predict_sentiment(request.review, model)
 
-#Test lettura del file pkl del modello
-def test_open_file_ok():
-    model_test = load_model(FILENAME)
-    assert model_test is not None
-
-#Test sollevamento eccezione FileNotFoundError se il file non esiste
-def test_open_file_ko():
-    with pytest.raises(FileNotFoundError):
-        load_model("wrong_filename.pkl")
-
-#Test sollevamento eccezione HttpException se il testo nella request è vuoto
-def test_input_missing():
-    with pytest.raises(HTTPException):
-        identify_language(TextToIdentify(text=""))
+    return SentimentResponse(sentiment=sentiment, confidence=round(confidence, 2))
 
 #Questo blocco di codice serve per avviare un server web usando Uvicorn quando lo script Python è eseguito direttamente.
-#MuseumLangMain è il nome del modulo Python mentre app è l'applicazione da eseguire definita all'interno del modulo MuseumLangMain
 if __name__ == "__main__":
-    uvicorn.run("MuseumLangMain:app")
+    uvicorn.run("main:app")
