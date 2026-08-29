@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 import pickle
 import uvicorn
 from pydantic import BaseModel, Field
