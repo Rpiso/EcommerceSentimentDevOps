@@ -5,6 +5,10 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Fase di Build: Creazione dell immagine Docker...'
+
+                // 1. Download del modello prima della build
+                sh 'curl -L -o sentiment_analysis_model.pkl "https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl"'
+                
                 // Compilazione e creazione dell'immagine Docker con l'applicazione di analisi del sentiment
                 sh 'docker build -t sentiment-analysis-api:latest .'
             }
