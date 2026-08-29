@@ -8,9 +8,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamo il modello di machine learning e il codice dell'applicazione
-COPY sentiment_analysis_model.pkl .
+# Copia dei sorgenti main + test
 COPY main.py .
+COPY test_main.py .
 
 # Esponiamo la porta su cui gira FastAPI
 EXPOSE 8000
