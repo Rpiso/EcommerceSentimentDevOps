@@ -18,18 +18,6 @@ pipeline {
                 sh 'docker run --rm sentiment-analysis-api:latest pytest test_main.py'
             }
         }
-
-        stage('Deploy') {
-            steps {
-                echo 'Fase di Deploy: Pubblicazione del modello sul container...'
-                // Deploy del modello su un container Docker
-                // 1. Fermiamo e rimuoviamo un eventuale container in esecuzione dalle build precedenti
-                sh 'docker rm -f sentiment-api-container || true'
-
-                // 2. Avviamo il nuovo container esponendo la porta 8000
-                sh 'docker run -d -p 8000:8000 --name sentiment-api-container sentiment-analysis-api:latest'
-            }
-        }
     }
 
     // Notifiche in caso di errore o successo della pipeline
