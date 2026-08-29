@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
 COPY test_main.py .
 
+# Copia modello scaricato da Jenkins
+COPY sentiment_analysis_model.pkl .
+
 # Esponiamo la porta su cui gira FastAPI
 EXPOSE 8000
 
