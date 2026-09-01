@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'ecommerce-sentiment-analysis-api'
+    static_configs:
+      # FastAPI gira sulla porta 8000
+      - targets: ['host.docker.internal:8000']
