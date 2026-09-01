@@ -79,6 +79,7 @@ def analyze_review(request: ReviewRequest) -> SentimentResponse:
 
     return SentimentResponse(sentiment=sentiment, confidence=round(confidence, 2))
 
+
 #Questo blocco di codice serve per avviare un server web usando Uvicorn quando lo script Python è eseguito direttamente.
 if __name__ == "__main__":
     uvicorn.run("main:app")
