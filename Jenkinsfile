@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    // Questa istruzione dice a Jenkins di attivare la pipeline in automatico
+    // quando riceve la notifica del webhook da GitHub.
+    triggers {
+        githubPush()
+    }
+
     stages {
         stage('Build') {
             steps {
