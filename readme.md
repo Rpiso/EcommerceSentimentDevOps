@@ -9,6 +9,11 @@ Questo progetto finale implementa un sistema automatizzato per il deploy e il mo
 Il sistema analizza le recensioni dei prodotti in lingua inglese per determinare il sentimento (positivo, negativo, neutro) in modo da supportare le decisioni aziendali per migliorare i prodotti e il servizio clienti.
 L'infrastruttura garantisce scalabilità e affidabilità automatizzando i processi tramite una pipeline CI/CD.
 
+## Repository Git
+Il codice sorgente, la pipeline e l'intera documentazione sono gestiti e versionati su Git, come richiesto dagli obiettivi del progetto. 
+Puoi consultare e clonare il repository completo al seguente [link](https://github.com/Rpiso/EcommerceSentimentDevOps)
+
+
 ## Architettura CI/CD (Jenkins)
 La pipeline CI/CD è gestita tramite uno script `Jenkinsfile` che si avvia in automatico (trigger automatico) ad ogni nuovo commit sul repository. 
 La pipeline esegue le seguenti fasi in sequenza, senza alcun intervento manuale:
@@ -87,8 +92,19 @@ Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni princ
   - `depends_on`: 
     - `prometheus`: Definisce una priorità di avvio. Istruisce Docker a lanciare il container di Grafana solo dopo aver avviato con successo quello di Prometheus, poiché il primo ha bisogno del secondo per funzionare correttamente.
 
+### 4. `Dockerfile`
+Questo file definisce le istruzioni per costruire l'immagine dell'applicazione, operazione che rappresenta il passaggio centrale della fase di Build nella pipeline CI/CD. 
+Il file contiene queste istruzioni:
 
-### 4. File dell'API - `main.py`
+*   **`FROM python:3.10-slim`**: Specifica l'immagine di base da utilizzare per il container; ho scelto Python 3.10 slim per avere un ambiente Python isolato e leggero.
+*   **`WORKDIR /app`**: Imposta la cartella di lavoro principale all'interno del container. Tutti i comandi successivi verranno eseguiti in questo percorso.
+*   **`COPY requirements.txt .`** e **`RUN pip install --no-cache-dir -r requirements.txt`**: Trasferisce l'elenco delle dipendenze nel container e installa le librerie necessarie (come FastAPI) per esporre i servizi REST.
+*   **`COPY main.py .`** e **`COPY test_main.py .`**: Copia il codice sorgente dell'applicazione e gli script per l'esecuzione automatizzata dei test.
+*   **`COPY sentiment_analysis_model.pkl .`**: Copia all'interno del container il file fisico del modello pre-addestrato necessario per elaborare il testo e fornire le previsioni.
+*   **`EXPOSE 8000`**: Dichiarazione esplicita della porta di rete su cui l'applicazione rimarrà in ascolto per ricevere il traffico in ingresso.
+*   **`CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]`**: Comando di avvio finale per il server web tramite Uvicorn. Questa istruzione mantiene attiva l'API REST per servire gli endpoint di predizione e per esporre le metriche di monitoraggio del sistema.
+
+### 5 File dell'API - `main.py`
 È il codice sorgente (basato su Flask o FastAPI) che serve il modello di Machine Learning. Il codice è strutturato per esporre due endpoint principali:
 *   **`POST /predict`**: Contiene la logica per accettare in input una recensione in formato JSON e restituire il sentimento analizzato con il relativo valore di confidenza.
 *   **`GET /metrics`**: Contiene l'integrazione necessaria a esporre le metriche del sistema in un formato testuale leggibile da Prometheus.
