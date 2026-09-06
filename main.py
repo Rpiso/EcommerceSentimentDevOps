@@ -56,9 +56,10 @@ def predict_sentiment(text: str, model_to_use) -> Tuple[str, float]:
         # Gestione della confidence
         try:
             prediction_proba = model_to_use.predict_proba([text])[0]
-            confidence = max(prediction_proba)
+            confidence = round(max(prediction_proba), 2)
         except AttributeError:
-            confidence = 1.0  # Fallback se il modello non espone predict_proba
+            # Se predict_proba fallisce, blocco esecuzione
+            raise ValueError("Il modello caricato non supporta il calcolo della confidenza (predict_proba).")
 
         return str(predicted_class), float(confidence)
     except Exception as e:
