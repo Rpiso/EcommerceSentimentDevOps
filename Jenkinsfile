@@ -54,7 +54,7 @@ pipeline {
             echo 'FAILED: Errore durante l\'esecuzione della pipeline. Controllare i log!'
             mail to: 'roberto.pisoni@fastwebnet.it',
                  subject: "Pipeline FAILED: E-commerce Sentiment API",
-                 body: "La pipeline di Sentiment Analysis su Jenkins ha riscontrato un errore. Controllare i log per ulteriori dettagli!"
+                 body: "La pipeline di Sentiment Analysis su Jenkins ha riscontrato un errore. Controllare il log di Jenkins per ulteriori dettagli!"
         }
     }
 }
