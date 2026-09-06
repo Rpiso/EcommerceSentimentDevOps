@@ -28,3 +28,29 @@ def test_predict_endpoint_empty_text():
     response = client.post("/predict", json={"review": "   "})
     assert response.status_code == 400
     assert response.json()["detail"] == "Input text is empty. Please provide a valid review."
+
+
+def test_predict_positive_review():
+    response = client.post("/predict", json={
+        "review": "This product is amazing! I like it."
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sentiment"] == "positive"
+
+def test_predict_negative_review():
+    response = client.post("/predict", json={
+        "review": "This product is terrible! Don't buy it."
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sentiment"] == "negative"
+
+
+def test_predict_neutral_review():
+    response = client.post("/predict", json={
+        "review": "The product is exactly as described."
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sentiment"] == "neutral"
