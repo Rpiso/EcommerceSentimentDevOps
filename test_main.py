@@ -49,7 +49,7 @@ def test_predict_negative_review():
 
 def test_predict_neutral_review():
     response = client.post("/predict", json={
-        "review": "The product is exactly as described."
+        "review": "After 2 weeks of use i consider this phone not so bad but not so good at the same time"
     })
     assert response.status_code == 200
     data = response.json()
