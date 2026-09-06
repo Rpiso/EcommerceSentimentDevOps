@@ -46,9 +46,15 @@ pipeline {
     post {
         success {
             echo 'SUCCESS: La pipeline ha effettuato build, test e deploy senza intervento manuale.'
+            mail to: 'roberto.pisoni@fastwebnet.it',
+                 subject: "Pipeline SUCCESS: E-commerce Sentiment API",
+                 body: "La pipeline di Sentiment Analysis su Jenkins è stata eseguita con successo. Il modello è in produzione."
         }
         failure {
             echo 'FAILED: Errore durante l\'esecuzione della pipeline. Controllare i log!'
+            mail to: 'roberto.pisoni@fastwebnet.it',
+                 subject: "Pipeline FAILED: E-commerce Sentiment API",
+                 body: "La pipeline di Sentiment Analysis su Jenkins ha riscontrato un errore. Controllare i log per ulteriori dettagli!"
         }
     }
 }
