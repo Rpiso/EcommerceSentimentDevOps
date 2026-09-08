@@ -1,0 +1,57 @@
+{
+  "title": "Sentiment Analysis API - Monitoraggio",
+  "tags": ["fastapi", "prometheus", "devops"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "schemaVersion": 30,
+  "panels": [
+    {
+      "title": "Errori di Predizione (HTTP 4xx / 5xx)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=~\"[45].*\"}[5m]))",
+          "legendFormat": "Errori/sec"
+        }
+      ]
+    },
+    {
+      "title": "Tempo di Risposta (Latenza Media)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_sum[5m])) / sum(rate(http_request_duration_seconds_count[5m]))",
+          "legendFormat": "Secondi"
+        }
+      ]
+    },
+    {
+      "title": "Utilizzo Memoria",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes",
+          "legendFormat": "Bytes"
+        }
+      ]
+    },
+    {
+      "title": "Utilizzo CPU",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[5m])",
+          "legendFormat": "CPU %"
+        }
+      ]
+    }
+  ]
+}

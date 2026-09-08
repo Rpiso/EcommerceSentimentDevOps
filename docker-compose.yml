@@ -20,3 +20,10 @@
         - GF_SECURITY_ADMIN_PASSWORD=admin
       depends_on:
         - prometheus
+      volumes:
+        # Montiamo il file del datasource
+        - ./grafana/provisioning/datasource/datasource.yml:/etc/grafana/provisioning/datasource/datasource.yml
+        # Montiamo il file del provider delle dashboard
+        - ./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboard/provider/dashboard_provider.yml
+        # Montiamo la cartella che conterrà i file JSON dei grafici
+        - ./grafana/dashboard:/etc/grafana/provisioning/dashboard
