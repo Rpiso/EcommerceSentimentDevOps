@@ -3,6 +3,10 @@
   "tags": ["fastapi", "prometheus", "devops"],
   "timezone": "browser",
   "refresh": "5s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
   "schemaVersion": 30,
   "panels": [
     {
