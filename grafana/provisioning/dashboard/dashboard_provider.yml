@@ -9,4 +9,4 @@ providers:
     updateIntervalSeconds: 10
     options:
       # Il percorso interno al container dove monteremo i nostri JSON
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards/json_files
