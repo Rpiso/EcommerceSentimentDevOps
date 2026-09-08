@@ -22,8 +22,8 @@
         - prometheus
       volumes:
         # Montiamo il file del datasource
-        - ./grafana/provisioning/datasource/datasource.yml:/etc/grafana/provisioning/datasource/datasource.yml
+        - ./grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
         # Montiamo il file del provider delle dashboard
-        - ./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboard/provider/dashboard_provider.yml
+        - ./grafana/provisioning/dashboards/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/provider/dashboard_provider.yml
         # Montiamo la cartella che conterrà i file JSON dei grafici
-        - ./grafana/dashboard:/etc/grafana/provisioning/dashboard
+        - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
