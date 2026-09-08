@@ -17,7 +17,7 @@
       ports:
         - "3000:3000"
       environment:
-        - GF_SECURITY_ADMIN_PASSWORD=admin
+        - GF_SECURITY_ADMIN_PASSWORD=Agosto_2026!01
       depends_on:
         - prometheus
       volumes:
