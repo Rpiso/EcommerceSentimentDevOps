@@ -41,9 +41,14 @@
       "targets": [
         {
           "expr": "process_resident_memory_bytes",
-          "legendFormat": "Bytes"
+          "legendFormat": "RAM Utilizzata"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
     },
     {
       "title": "Utilizzo CPU",
