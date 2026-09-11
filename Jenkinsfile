@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+       docker {
+            image 'python:3.10'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     // Questa istruzione dice a Jenkins di attivare la pipeline in automatico
     // quando riceve la notifica del webhook da GitHub.
