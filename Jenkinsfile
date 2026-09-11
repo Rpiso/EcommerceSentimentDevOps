@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-       docker {
-            image 'python:3.10'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     // Questa istruzione dice a Jenkins di attivare la pipeline in automatico
     // quando riceve la notifica del webhook da GitHub.
@@ -17,13 +12,7 @@ pipeline {
             steps {
                 echo 'Fase di Build: Creazione dell immagine Docker...'
 
-                // Creazione di un ambiente virtuale Python e installazione delle dipendenze
-                sh '''python3.10 -m venv venv
-                    source venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt'''
-
-                // Download del modello prima della build
+                //  Download del modello prima della build
                 sh 'curl -L -o sentiment_analysis_model.pkl "https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl"'
                 
                 // Compilazione e creazione dell'immagine Docker con l'applicazione di analisi del sentiment
