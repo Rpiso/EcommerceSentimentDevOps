@@ -15,12 +15,12 @@ Puoi consultare e clonare il repository completo al seguente [link](https://gith
 
 
 ## Architettura CI/CD (Jenkins)
-La pipeline CI/CD è gestita tramite uno script `Jenkinsfile` che si avvia in automatico (trigger automatico) ad ogni nuovo commit sul repository. 
+La pipeline CI/CD è gestita tramite uno script `Jenkinsfile` che si avvia in automatico (trigger automatico) a ogni nuovo commit sul repository. 
 La pipeline esegue le seguenti fasi in sequenza, senza alcun intervento manuale:
 * **Build**: Effettua la compilazione del modello e crea l'immagine Docker dell'applicazione.
 * **Test**: Esegue test automatizzati, sia unit test che test di integrazione, per validare le previsioni.
 * **Deploy**: Gestisce la pubblicazione del modello su un container Docker.
-* **Notifiche**: Il sistema è predisposto per inviare notifiche in caso di errore o successo della pipeline.
+* **Notifiche**: Il sistema è predisposto per inviare notifiche via mail in caso di errore o successo della pipeline.
 
 ## Utilizzo dell'API REST
 L'applicazione è sviluppata in FastAPI per servire il modello di Machine Learning.
@@ -57,16 +57,15 @@ Questo script definisce l'intera pipeline di Continuous Integration e Continuous
 *   **Notifiche:** Gestisce l'invio di avvisi in caso di successo o errore dell'intera pipeline.
 *   **Trigger:** Definisce l'attivazione automatica della pipeline a ogni nuovo commit sul repository. Nel file è presente la direttiva `triggers { githubPush() }` che si integra con il webhook di GitHub, facendo partire la build in completa autonomia ad ogni nuovo commit sul repository. *(Nota: Questo sostituisce la necessità di configurare l'opzione "GitHub hook trigger for GITScm polling" manualmente dall'interfaccia web).*
 
-### 2. `prometheus.yml`
-È il file di configurazione principale di Prometheus, responsabile della raccolta dei dati. Al suo interno è configurato per:
-*   Puntare direttamente all'endpoint `GET /metrics` esposto dalla nostra API REST.
-*   Raccogliere periodicamente metriche fondamentali come il tempo di risposta delle richieste e gli eventuali errori di predizione.
-*   Registrare le metriche relative all'utilizzo delle risorse hardware, come CPU e memoria.
+* Nota: La configurazione del server di posta (server, porta, credenziali di accesso, protocollo di sicurezza) deve essere impostata tramite interfaccia grafica di Jenkins.
 
-Riguardo ai parametri specifici:
-- La frequenza di raccolta delle metriche è impostata a 5 secondi (parametro `scrape_interval`) per garantire un monitoraggio costante e tempestivo delle prestazioni del sistema.
-- Il parametro `job_name` impostato a 'ecommerce-sentiment-analysis-api' assegna un nome identificativo a questa specifica attività di raccolta. Questo sarà utile in Grafana per filtrare e riconoscere i dati provenienti da questa API.
-- L'ultimo parametro `targets` 'host.docker.internal:8000' indica l'indirizzo e la porta del container che ospita l'API REST, consentendo a Prometheus di accedere correttamente alle metriche esposte.
+### 2. `prometheus.yml`
+È il file di configurazione principale di Prometheus, responsabile della raccolta dei dati. Al suo interno troviamo queste sezioni:
+-  **`global: scrape_interval: 5s:`** Impostazione globale che definisce il ritmo di lavoro di Prometheus. scrape_interval indica che Prometheus effettuerà lo "scraping" (cioè la lettura e raccolta dei dati) ogni 5 secondi.
+-  **`scrape_configs`**: Definisce le configurazioni per la raccolta delle metriche. In questo caso, è presente un solo job denominato 'ecommerce-sentiment-analysis-api'.
+- **`job_name: 'ecommerce-sentiment-analysis-api'`**: Assegna un nome identificativo a questa specifica attività di raccolta. Utile in Grafana per filtrare e riconoscere i dati provenienti da questa API.
+- **`targets: ['host.docker.internal:8000']`**: Indica l'indirizzo e la porta del container che ospita l'API REST creata con FastAPI, consentendo a Prometheus di accedere correttamente alle metriche esposte.
+Prometheus aggiungerà automaticamente /metrics alla fine di questo indirizzo, andando così a interrogare l'endpoint GET /metrics che espone le metriche del sistema.
 
 ### 3. `docker-compose.yml`
 Questo file si occupa dell'orchestrazione dei container dell'intero sistema. Il suo scopo principale è quello di avviare e configurare l'infrastruttura di monitoraggio, istanziando i servizi per Prometheus e Grafana.
@@ -77,7 +76,7 @@ Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni princ
   - `image: prom/prometheus:latest`: Scarica ed esegue l'ultima versione ufficiale dell'ambiente Prometheus.
   - `container_name: prometheus`: Assegna il nome "prometheus" al container.
   - `volumes`: 
-    - `./prometheus.yml:/etc/prometheus/prometheus.yml`: Crea un collegamento tra la tua macchina e il container. Prende il file di configurazione locale (./prometheus.yml) e lo inietta nel container, sovrascrivendo quello di default.
+    - `./prometheus.yml:/etc/prometheus/prometheus.yml`: Prende il file di configurazione locale (./prometheus.yml) e lo monta nel container Docker, sovrascrivendo quello di default e usando quindi tale configurazione.
   - `ports`: 
     - `"9090:9090"`: Mappa la porta 9090 del container sulla porta 9090 del proprio computer, permettendoti di accedere all'interfaccia web di Prometheus.
   - `extra_hosts`: 
@@ -91,6 +90,10 @@ Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni princ
     - `GF_SECURITY_ADMIN_PASSWORD=admin`: Inietta una variabile d'ambiente per configurare automaticamente "admin" come password di default per l'amministratore, bypassando il setup iniziale manuale.
   - `depends_on`: 
     - `prometheus`: Definisce una priorità di avvio. Istruisce Docker a lanciare il container di Grafana solo dopo aver avviato con successo quello di Prometheus, poiché il primo ha bisogno del secondo per funzionare correttamente.
+  -  `volumes`: 
+    - `./grafana/provisioning/datasource/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml`: monta nel container Docker il file di configurazione del datasource di Grafana.
+    - `./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboard_provider.yml`: monta nel container Docker il file di configurazione del provider delle dashboard di Grafana.
+    - `./grafana/dashboard:/etc/grafana/provisioning/dashboards/json_files`: monta nel container Docker la cartella che conterrà i file JSON dei grafici di Grafana.
 
 ### 4. `Dockerfile`
 Questo file definisce le istruzioni per costruire l'immagine dell'applicazione, operazione che rappresenta il passaggio centrale della fase di Build nella pipeline CI/CD. 
@@ -104,7 +107,29 @@ Il file contiene queste istruzioni:
 *   **`EXPOSE 8000`**: Dichiarazione esplicita della porta di rete su cui l'applicazione rimarrà in ascolto per ricevere il traffico in ingresso.
 *   **`CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]`**: Comando di avvio finale per il server web tramite Uvicorn. Questa istruzione mantiene attiva l'API REST per servire gli endpoint di predizione e per esporre le metriche di monitoraggio del sistema.
 
-### 5 File dell'API - `main.py`
+### 5 `main.py`
 È il codice sorgente (basato su Flask o FastAPI) che serve il modello di Machine Learning. Il codice è strutturato per esporre due endpoint principali:
 *   **`POST /predict`**: Contiene la logica per accettare in input una recensione in formato JSON e restituire il sentimento analizzato con il relativo valore di confidenza.
 *   **`GET /metrics`**: Contiene l'integrazione necessaria a esporre le metriche del sistema in un formato testuale leggibile da Prometheus.
+
+### 6. `test_main.py`
+Contiene gli unit test e i test di integrazione per validare le previsioni del modello. Questi test vengono eseguiti automaticamente durante la fase di Test della pipeline CI/CD
+I test includono casi di test per sentimenti positivi, negativi e neutri, nonché test per gestire input non validi o mancanti.
+
+### 7. `sentiment_analysis_model.pkl`
+Contiene il modello di Sentiment Analysis pre-addestrato, salvato in formato pickle. Link al modello: [sentiment_analysis_model.pkl](https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl)
+
+### 8. `requirements.txt`
+Contiene l'elenco delle dipendenze Python necessarie per eseguire l'applicazione, inclusi framework come FastAPI, librerie per il machine learning e strumenti per il testing.
+La versione di scikit-learn specificata in questo file è la 1.6.0, stessa versione del modello pickle evitando così l'emissione di un InconsistentVersionWarning durante la fase di buid ma soprattutto evitando predizioni potenzialmente sbagliate.
+
+### 9. `grafana/provisioning/datasource/datasource.yml`
+Contiene la configurazione del datasource di Grafana, permettendogli di connettersi a Prometheus per leggere le metriche raccolte dall'API REST. 
+
+* **`datasources:`**: Sezione che definisce i datasource disponibili in Grafana.
+* **`name: Prometheus`**: Identificativo datasource
+* **`type: prometheus`**: Tipo di datasource, in questo caso Prometheus.
+* * **`access: proxy`**: Imposta il metodo di accesso al datasource. In questo caso, Grafana agirà come un proxy per inoltrare le richieste a Prometheus.
+* **`url: http://prometheus:9090`**: URL di Prometheus a cui Grafana deve connettersi per recuperare le metriche. L'URL fa riferimento al container di Prometheus definito nel file `docker-compose.yml`.
+* **`isDefault: true`**: Imposta questo datasource come predefinito per le query di Grafana.
+* **`editable: true`**: Permette di modificare la configurazione del datasource direttamente dall'interfaccia da Grafana
