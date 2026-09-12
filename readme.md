@@ -2,7 +2,30 @@
 
 ## Progetto finale del modulo di DevOps e Gestione del ciclo di vita del software di Professional AI
 
-## Progetto di Roberto Pisoni
+### Progetto di Roberto Pisoni
+
+## Sommario
+- [Panoramica del Progetto](#panoramica-del-progetto)
+- [Repository Git](#repository-git)
+- [Architettura CI/CD (Jenkins)](#architettura-cicd-jenkins)
+- [Utilizzo dell'API REST](#utilizzo-dellapi-rest)
+  - [Predizione del Sentimento](#predizione-del-sentimento)
+  - [Esportazione delle Metriche](#esportazione-delle-metriche)
+- [Infrastruttura di Monitoraggio](#infrastruttura-di-monitoraggio)
+- [Istruzioni per la Manutenzione](#istruzioni-per-la-manutenzione)
+- [Struttura e Contenuto dei File di Configurazione](#struttura-e-contenuto-dei-file-di-configurazione)
+  - [1. Jenkinsfile](#1-jenkinsfile)
+  - [2. prometheus.yml](#2-prometheusyml)
+  - [3. docker-compose.yml](#3-docker-composeyml)
+  - [4. Dockerfile](#4-dockerfile)
+  - [5. main.py](#5-mainpy)
+  - [6. test_main.py](#6-test_mainpy)
+  - [7. sentiment_analysis_model.pkl](#7-sentiment_analysis_modelpkl)
+  - [8. requirements.txt](#8-requirementstxt)
+  - [9. grafana/provisioning/datasource/datasource.yml](#9-grafanaprovisioningdatasourcedatasourceyml)
+  - [10. grafana/provisioning/dashboard/dashboard_provider.yml](#10-grafanaprovisioningdashboarddashboard_provideryml)
+  - [11. grafana/dashboard/dashboard.json](#11-grafanadashboarddashboardjson)
+  - [12. .gitignore](#12-gitignore)
 
 ## Panoramica del Progetto
 Questo progetto finale implementa un sistema automatizzato per il deploy e il monitoraggio di un modello di Sentiment Analysis destinato a una piattaforma di e-commerce.
