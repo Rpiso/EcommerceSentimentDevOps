@@ -4,40 +4,40 @@
 
 ### Progetto di Roberto Pisoni
 
-## Sommario
-- [Panoramica del Progetto](#panoramica-del-progetto)
-- [Repository Git](#repository-git)
-- [Architettura CI/CD (Jenkins)](#architettura-cicd-jenkins)
-- [Utilizzo dell'API REST](#utilizzo-dellapi-rest)
+##Sommario
+- [1. Panoramica del Progetto](#1-panoramica-del-progetto)
+- [2. Repository Git](#2-repository-git)
+- [3. Architettura CI/CD (Jenkins)](#3-architettura-cicd-jenkins)
+- [4. Utilizzo dell'API REST](#4-utilizzo-dellapi-rest)
   - [Predizione del Sentimento](#predizione-del-sentimento)
   - [Esportazione delle Metriche](#esportazione-delle-metriche)
-- [Infrastruttura di Monitoraggio](#infrastruttura-di-monitoraggio)
-- [Istruzioni per la Manutenzione](#istruzioni-per-la-manutenzione)
-- [Struttura e Contenuto dei File di Configurazione](#struttura-e-contenuto-dei-file-di-configurazione)
-  - [1. Jenkinsfile](#1-jenkinsfile)
-  - [2. prometheus.yml](#2-prometheusyml)
-  - [3. docker-compose.yml](#3-docker-composeyml)
-  - [4. Dockerfile](#4-dockerfile)
-  - [5. main.py](#5-mainpy)
-  - [6. test_main.py](#6-test_mainpy)
-  - [7. sentiment_analysis_model.pkl](#7-sentiment_analysis_modelpkl)
-  - [8. requirements.txt](#8-requirementstxt)
-  - [9. grafana/provisioning/datasource/datasource.yml](#9-grafanaprovisioningdatasourcedatasourceyml)
-  - [10. grafana/provisioning/dashboard/dashboard_provider.yml](#10-grafanaprovisioningdashboarddashboard_provideryml)
-  - [11. grafana/dashboard/dashboard.json](#11-grafanadashboarddashboardjson)
-  - [12. .gitignore](#12-gitignore)
+- [5. Infrastruttura di Monitoraggio](#5-infrastruttura-di-monitoraggio)
+- [6. Istruzioni per la Manutenzione](#6-istruzioni-per-la-manutenzione)
+- [7. Struttura e Contenuto dei File di Configurazione](#7-struttura-e-contenuto-dei-file-di-configurazione)
+  - [Jenkinsfile](#jenkinsfile)
+  - [prometheus.yml](#prometheusyml)
+  - [docker-compose.yml](#docker-composeyml)
+  - [Dockerfile](#dockerfile)
+  - [main.py](#mainpy)
+  - [test_main.py](#test_mainpy)
+  - [sentiment_analysis_model.pkl](#sentiment_analysis_modelpkl)
+  - [requirements.txt](#requirementstxt)
+  - [grafana/provisioning/datasource/datasource.yml](#grafanaprovisioningdatasourcedatasourceyml)
+  - [grafana/provisioning/dashboard/dashboard_provider.yml](#grafanaprovisioningdashboarddashboard_provideryml)
+  - [grafana/dashboard/dashboard.json](#grafanadashboarddashboardjson)
+  - [.gitignore](#gitignore)
 
-## Panoramica del Progetto
+## 1. Panoramica del Progetto
 Questo progetto finale implementa un sistema automatizzato per il deploy e il monitoraggio di un modello di Sentiment Analysis destinato a una piattaforma di e-commerce.
 Il sistema analizza le recensioni dei prodotti in lingua inglese per determinare il sentimento (positivo, negativo, neutro) in modo da supportare le decisioni aziendali per migliorare i prodotti e il servizio clienti.
 L'infrastruttura garantisce scalabilità e affidabilità automatizzando i processi tramite una pipeline CI/CD.
 
-## Repository Git
+## 2. Repository Git
 Il codice sorgente, la pipeline e l'intera documentazione sono gestiti e versionati su Git, come richiesto dagli obiettivi del progetto. 
 Puoi consultare e clonare il repository completo al seguente [link](https://github.com/Rpiso/EcommerceSentimentDevOps)
 
 
-## Architettura CI/CD (Jenkins)
+## 3. Architettura CI/CD (Jenkins)
 La pipeline CI/CD è gestita tramite uno script `Jenkinsfile` che si avvia in automatico (trigger automatico) a ogni nuovo commit sul repository. 
 La pipeline esegue le seguenti fasi in sequenza, senza alcun intervento manuale:
 * **Build**: Effettua la compilazione del modello e crea l'immagine Docker dell'applicazione.
@@ -45,7 +45,7 @@ La pipeline esegue le seguenti fasi in sequenza, senza alcun intervento manuale:
 * **Deploy**: Gestisce la pubblicazione del modello su un container Docker.
 * **Notifiche**: Il sistema è predisposto per inviare notifiche via mail in caso di errore o successo della pipeline.
 
-## Utilizzo dell'API REST
+## 4. Utilizzo dell'API REST
 L'applicazione è sviluppata in FastAPI per servire il modello di Machine Learning.
 
 ### Predizione del Sentimento
@@ -60,7 +60,7 @@ L'applicazione è sviluppata in FastAPI per servire il modello di Machine Learni
 * **Endpoint**: `GET /metrics`.
 * **Funzionamento**: Espone le metriche del sistema in un formato standard leggibile da Prometheus.
 
-## Infrastruttura di Monitoraggio
+## 5. Infrastruttura di Monitoraggio
 Il sistema include uno stack dedicato al monitoraggio proattivo, utile per identificare e risolvere rapidamente eventuali colli di bottiglia o problemi nel modello
 * **Prometheus:** Raccoglie costantemente i dati esposti dall'API REST, tenendo traccia del tempo di risposta delle richieste, degli eventuali errori di predizione e dell'utilizzo di risorse hardware come CPU e memoria.
 * **Grafana:** Si interfaccia con i dati raccolti da Prometheus per visualizzare in tempo reale le prestazioni dell'intero sistema tramite dashboard interattive. Questa dashboard mostra:
@@ -69,14 +69,14 @@ Il sistema include uno stack dedicato al monitoraggio proattivo, utile per ident
   * quanta RAM usa
   * quanta CPU sta consumando
 
-## Istruzioni per la Manutenzione
+## 6. Istruzioni per la Manutenzione
 * **Configurazione Iniziale:** Il repository contiene tutti gli script necessari; l'intero ecosistema è containerizzato tramite Docker, semplificando l'installazione e la configurazione.
 * **Sviluppo Continuo:** Grazie a Jenkins, ogni successiva modifica al codice verrà automaticamente processata, testata e rilasciata, minimizzando gli interventi manuali di manutenzione.
 
-## Struttura e Contenuto dei File di Configurazione
+## 7. Struttura e Contenuto dei File di Configurazione
 Il progetto si basa su file di configurazione specifici, ciascuno con un ruolo ben definito all'interno dell'infrastruttura:
 
-### 1. `Jenkinsfile`
+### `Jenkinsfile`
 Questo script definisce l'intera pipeline di Continuous Integration e Continuous Deployment (CI/CD). Al suo interno è strutturato nelle seguenti fasi:
 *   **Build:** Contiene le istruzioni per il download del modello prima della build e la compilazione e la creazione dell'immagine Docker dell'applicazione.
 *   **Test:** Avvia l'esecuzione automatizzata degli unit test e dei test di integrazione per validare le previsioni del modello. Sfrutta l'immagine Docker creata nel punto precedente per lanciare pytest in un ambiente isolato.
@@ -86,7 +86,7 @@ Questo script definisce l'intera pipeline di Continuous Integration e Continuous
 
 * Nota: La configurazione del server di posta (server, porta, credenziali di accesso, protocollo di sicurezza) deve essere impostata tramite interfaccia grafica di Jenkins.
 
-### 2. `prometheus.yml`
+### `prometheus.yml`
 È il file di configurazione principale di Prometheus, responsabile della raccolta dei dati. Al suo interno troviamo queste sezioni:
 -  **`global: scrape_interval: 5s:`** Impostazione globale che definisce il ritmo di lavoro di Prometheus. scrape_interval indica che Prometheus effettuerà lo "scraping" (cioè la lettura e raccolta dei dati) ogni 5 secondi.
 -  **`scrape_configs`**: Definisce le configurazioni per la raccolta delle metriche. In questo caso, è presente un solo job denominato 'ecommerce-sentiment-analysis-api'.
@@ -94,7 +94,7 @@ Questo script definisce l'intera pipeline di Continuous Integration e Continuous
 - **`targets: ['host.docker.internal:8000']`**: Indica l'indirizzo e la porta del container che ospita l'API REST creata con FastAPI, consentendo a Prometheus di accedere correttamente alle metriche esposte.
 Prometheus aggiungerà automaticamente /metrics alla fine di questo indirizzo, andando così a interrogare l'endpoint GET /metrics che espone le metriche del sistema.
 
-### 3. `docker-compose.yml`
+### `docker-compose.yml`
 Questo file si occupa dell'orchestrazione dei container dell'intero sistema. Il suo scopo principale è quello di avviare e configurare l'infrastruttura di monitoraggio, istanziando i servizi per Prometheus e Grafana.
 Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni principali:
 
@@ -122,7 +122,7 @@ Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni princ
     - `./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboard_provider.yml`: monta nel container Docker il file di configurazione del provider delle dashboard di Grafana.
     - `./grafana/dashboard:/etc/grafana/provisioning/dashboards/json_files`: monta nel container Docker la cartella che conterrà i file JSON dei grafici di Grafana.
 
-### 4. `Dockerfile`
+### `Dockerfile`
 Questo file definisce le istruzioni per costruire l'immagine dell'applicazione, operazione che rappresenta il passaggio centrale della fase di Build nella pipeline CI/CD. 
 Il file contiene queste istruzioni:
 
@@ -134,23 +134,23 @@ Il file contiene queste istruzioni:
 *   **`EXPOSE 8000`**: Dichiarazione esplicita della porta di rete su cui l'applicazione rimarrà in ascolto per ricevere il traffico in ingresso.
 *   **`CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]`**: Comando di avvio finale per il server web tramite Uvicorn. Questa istruzione mantiene attiva l'API REST per servire gli endpoint di predizione e per esporre le metriche di monitoraggio del sistema.
 
-### 5 `main.py`
+### `main.py`
 È il codice sorgente (basato su Flask o FastAPI) che serve il modello di Machine Learning. Il codice è strutturato per esporre due endpoint principali:
 *   **`POST /predict`**: Contiene la logica per accettare in input una recensione in formato JSON e restituire il sentimento analizzato con il relativo valore di confidenza.
 *   **`GET /metrics`**: Contiene l'integrazione necessaria a esporre le metriche del sistema in un formato testuale leggibile da Prometheus.
 
-### 6. `test_main.py`
+### `test_main.py`
 Contiene gli unit test e i test di integrazione per validare le previsioni del modello. Questi test vengono eseguiti automaticamente durante la fase di Test della pipeline CI/CD
 I test includono casi di test per sentimenti positivi, negativi e neutri, nonché test per gestire input non validi o mancanti.
 
-### 7. `sentiment_analysis_model.pkl`
+### `sentiment_analysis_model.pkl`
 Contiene il modello di Sentiment Analysis pre-addestrato, salvato in formato pickle. Link al modello: [sentiment_analysis_model.pkl](https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl)
 
-### 8. `requirements.txt`
+### `requirements.txt`
 Contiene l'elenco delle dipendenze Python necessarie per eseguire l'applicazione, inclusi framework come FastAPI, librerie per il machine learning e strumenti per il testing.
 La versione di scikit-learn specificata in questo file è la 1.6.0, stessa versione del modello pickle evitando così l'emissione di un InconsistentVersionWarning durante la fase di buid ma soprattutto evitando predizioni potenzialmente sbagliate.
 
-### 9. `grafana/provisioning/datasource/datasource.yml`
+### `grafana/provisioning/datasource/datasource.yml`
 Contiene la configurazione del datasource di Grafana, permettendogli di connettersi a Prometheus per leggere le metriche raccolte dall'API REST. 
 
 * **`datasources:`**: Sezione che definisce i datasource disponibili in Grafana.
@@ -161,7 +161,7 @@ Contiene la configurazione del datasource di Grafana, permettendogli di connette
 * **`isDefault: true`**: Imposta questo datasource come predefinito per le query di Grafana.
 * **`editable: true`**: Permette di modificare la configurazione del datasource direttamente dall'interfaccia da Grafana
 
-### 10. `grafana/provisioning/dashboard/dashboard_provider.yml`
+### `grafana/provisioning/dashboard/dashboard_provider.yml`
 Contiene la configurazione del provider delle dashboards di Grafana, che permette di caricare automaticamente le dashboard predefinite all'avvio del container.
 
 * **`name: 'default'`**: Nome del provider di dashboard.
@@ -171,7 +171,7 @@ Contiene la configurazione del provider delle dashboards di Grafana, che permett
 * **`updateIntervalSeconds: 10`**: Grafana controllerà ogni 10 secondi se ci sono nuove dashboard da caricare o aggiornare.
 * **`options/path:`**: percorso nel container dove Grafana cercherà i file JSON delle dashboard da caricare.
 
-### 11. `grafana/dashboard/dashboard.json`
+### `grafana/dashboard/dashboard.json`
 Contiene la definizione della dashboards di Grafana che visualizzano in tempo reale le metriche raccolte da Prometheus.
 I tag nel json sono autoesplicativi e descrivono le caratteristiche principali della dashboard:
 * **`title`**: nome della dashboard ("Sentiment Analysis API - Monitoraggio")
@@ -194,5 +194,5 @@ I tag nel json sono autoesplicativi e descrivono le caratteristiche principali d
   - 4] Grafico Utilizzo CPU: mostra il consumo di CPU del processo usando la query predefinita `process_cpu_seconds_total`
   La funzione rate(...) calcola il tasso di utilizzo nel tempo.
 
-### 12. `.gitignore`
+### `.gitignore`
 Contiene l'elenco dei file e delle cartelle che Git deve ignorare durante il versionamento. Questo è utile per evitare di includere file temporanei, di log o di configurazione locale che non sono rilevanti per il progetto condiviso.
