@@ -40,7 +40,11 @@ L'applicazione è sviluppata in FastAPI per servire il modello di Machine Learni
 ## Infrastruttura di Monitoraggio
 Il sistema include uno stack dedicato al monitoraggio proattivo, utile per identificare e risolvere rapidamente eventuali colli di bottiglia o problemi nel modello
 * **Prometheus:** Raccoglie costantemente i dati esposti dall'API REST, tenendo traccia del tempo di risposta delle richieste, degli eventuali errori di predizione e dell'utilizzo di risorse hardware come CPU e memoria.
-* **Grafana:** Si interfaccia con i dati raccolti da Prometheus per visualizzare in tempo reale le prestazioni dell'intero sistema tramite dashboard interattive.
+* **Grafana:** Si interfaccia con i dati raccolti da Prometheus per visualizzare in tempo reale le prestazioni dell'intero sistema tramite dashboard interattive. Questa dashboard mostra:
+  * se l’API fallisce
+  * quanto è lenta
+  * quanta RAM usa
+  * quanta CPU sta consumando
 
 ## Istruzioni per la Manutenzione
 * **Configurazione Iniziale:** Il repository contiene tutti gli script necessari; l'intero ecosistema è containerizzato tramite Docker, semplificando l'installazione e la configurazione.
@@ -133,3 +137,39 @@ Contiene la configurazione del datasource di Grafana, permettendogli di connette
 * **`url: http://prometheus:9090`**: URL di Prometheus a cui Grafana deve connettersi per recuperare le metriche. L'URL fa riferimento al container di Prometheus definito nel file `docker-compose.yml`.
 * **`isDefault: true`**: Imposta questo datasource come predefinito per le query di Grafana.
 * **`editable: true`**: Permette di modificare la configurazione del datasource direttamente dall'interfaccia da Grafana
+
+### 10. `grafana/provisioning/dashboard/dashboard_provider.yml`
+Contiene la configurazione del provider delle dashboards di Grafana, che permette di caricare automaticamente le dashboard predefinite all'avvio del container.
+
+* **`name: 'default'`**: Nome del provider di dashboard.
+* **`orgId: 1`**: Identificativo dell'organizzazione in Grafana (defualt=1).
+* **`type: file`**: Tipo di provider, in questo caso un file.
+* **`disableDeletion: false`**: Impostazione che consente la cancellazione di dashboard esistenti e non più presenti nel file di configurazione.
+* **`updateIntervalSeconds: 10`**: Grafana controllerà ogni 10 secondi se ci sono nuove dashboard da caricare o aggiornare.
+* **`options/path:`**: percorso nel container dove Grafana cercherà i file JSON delle dashboard da caricare.
+
+### 11. `grafana/dashboard/dashboard.json`
+Contiene la definizione della dashboards di Grafana che visualizzano in tempo reale le metriche raccolte da Prometheus.
+I tag nel json sono autoesplicativi e descrivono le caratteristiche principali della dashboard:
+* **`title`**: nome della dashboard ("Sentiment Analysis API - Monitoraggio")
+* **`tags`**: etichette per trovare facilmente la dashboard
+* **`refresh: "5s"`**: il grafico si aggiorna ogni 5 secondi
+* **`time:`**: la dashboard mostra gli ultimi 5 minuti (now-5m)
+* **`panels:`**: qua vengono definiti i grafici da mostrare, ogni blocco è un grafico. In 4 grafici implementati, ognuno con un titolo e una query PromQL per estrarre i dati da Prometheus, sono i seguenti: 
+
+  - 1] Grafico Errore di Predizione (HTTP 4xx / 5xx): mostra quante richieste di predizione hanno fallito nel tempo, con status code 4xx o 5xx. La query PromQL utilizzata è:
+  `sum(rate(http_requests_total{status=~\"[45].*\"}[5m]))` dove rate(...) misura il numero di richieste fallite per secondo e sum(...) è la somma totale.
+  
+  - 2] Grafico Tempo di Risposta (Latenza Media): calcola il tempo medio di risposta del backend. La query utilizzata è:
+  `sum(rate(http_request_duration_seconds_sum[5m])) / sum(rate(http_request_duration_seconds_count[5m]))` dove viene fatta la divisione tra due metriche:
+    - `http_request_duration_seconds_sum` = tempo totale impiegato
+    - `http_request_duration_seconds_count` = numero di richieste
+
+  - 3] Grafico Utilizzo Memoria: mostra quanta memoria RAM sta utilizzando il processo usando la query predefinita `process_resident_memory_bytes`
+  L'unità di misura è "bytes" - fa vedere il valore in byte
+
+  - 4] Grafico Utilizzo CPU: mostra il consumo di CPU del processo usando la query predefinita `process_cpu_seconds_total`
+  La funzione rate(...) calcola il tasso di utilizzo nel tempo.
+
+### 12. `.gitignore`
+Contiene l'elenco dei file e delle cartelle che Git deve ignorare durante il versionamento. Questo è utile per evitare di includere file temporanei, di log o di configurazione locale che non sono rilevanti per il progetto condiviso.
