@@ -1,29 +1,48 @@
   version: '3.8'
 
-  services:
-    prometheus:
-      image: prom/prometheus:latest
-      container_name: prometheus
-      volumes:
-        - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      ports:
-        - "9090:9090"
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
+services:
+  api:
+    build: .
+    container_name: sentiment-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
 
-    grafana:
-      image: grafana/grafana:latest
-      container_name: grafana
-      ports:
-        - "3000:3000"
-      environment:
-        - GF_SECURITY_ADMIN_PASSWORD=Agosto_2026!01
-      depends_on:
-        - prometheus
-      volumes:
-        # Montiamo il file del datasource
-        - ./grafana/provisioning/datasource/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
-        # Montiamo il file del provider delle dashboard
-        - ./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboard_provider.yml
-        # Montiamo la cartella che conterrà i file JSON dei grafici
-        - ./grafana/dashboard:/etc/grafana/provisioning/dashboards/json_files
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana/provisioning/datasource/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboard_provider.yml
+      - ./grafana/dashboard:/etc/grafana/provisioning/dashboards/json_files
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge

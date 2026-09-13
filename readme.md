@@ -36,7 +36,8 @@ L'infrastruttura garantisce scalabilità e affidabilità automatizzando i proces
 ## 2. Repository Git
 Il codice sorgente, la pipeline e l'intera documentazione sono gestiti e versionati su Git, come richiesto dagli obiettivi del progetto. 
 Puoi consultare e clonare il repository completo al seguente [link](https://github.com/Rpiso/EcommerceSentimentDevOps)
-
+Per il modello di Sentiment Analysis, ho utilizzato un modello pre-addestrato in lingua inglese, salvato in formato pickle (`sentiment_analysis_model.pkl`), **NON** incluso nel repository.
+Per l'avvio manuale dell'applicazione, è necessario scaricare il file del modello dal seguente [link](https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl) e posizionarlo nella cartella principale del progetto.
 
 ## 3. Architettura CI/CD (Jenkins)
 La pipeline CI/CD è gestita tramite uno script `Jenkinsfile` che si avvia in automatico (trigger automatico) a ogni nuovo commit sul repository. 
@@ -78,13 +79,14 @@ Il sistema include uno stack dedicato al monitoraggio proattivo, utile per ident
 ### 7.1. Prerequisiti
 Prima di tutto, assicurarsi che sul computer siano installati:
 - Git
+- Python 3
+- Pip
 - Docker
 - Docker Compose
-- Python
+- Jenkins
 - Curl
-- un editor di testo come VS Code
 
-### 7.2. Scaricare il progetto
+### 7.2. Scaricare il progetto e il modello di Sentiment Analysis
 Per semplicità considero`EcommerceSentimentDevOps` la cartella del progetto. Spostarsi nella cartella e scaricare il progetto scegliendo uno dei 2 metodi:
 - **Clonare il repository Git**:
 ```bash
@@ -94,61 +96,112 @@ git clone https://github.com/Rpiso/EcommerceSentimentDevOps.git
 
 All'interno della cartella del progetto, troverai tutti e 12 i file di configurazione e il codice sorgente necessari per eseguire l'applicazione.
 
-### 7.3 Installare le dipendenze Python
-Usando un ambiente virtuale, eseguire i seguenti comandi per installare le dipendenze Python necessarie:
+Per il modello di Sentiment Analysis, scaricare il file `sentiment_analysis_model.pkl` dal seguente [link](https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl) e posizionarlo nella cartella principale del progetto.
+
+### 7.3. Configurare le Variabili d'Ambiente
+Prima di avviare i servizi, crea un file `.env` nella radice del progetto con le credenziali:
 ```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
+GRAFANA_PASSWORD=1234
 ```
 
-### 7.4. Avviare l'API REST
-Per avviare l’API localmente:
+**Nota:** Il file `.env` è già incluso nel `.gitignore` per proteggere le credenziali. Non verrà mai committato su GitHub.
+
+### 7.4. Avviare l'Infrastruttura Completa con Docker Compose
+La soluzione più semplice è avviare tutto (API, Prometheus, Grafana) con un solo comando. Spostarsi nella cartella del progetto e eseguire:
 ```bash
+docker-compose up -d
+```
+
+Questo comando avvia tre servizi in background:
+- **API REST** (FastAPI) su `http://localhost:8000`
+- **Prometheus** su `http://localhost:9090` (raccolta metriche)
+- **Grafana** su `http://localhost:3000` (visualizzazione)
+
+Verifica che i container siano attivi:
+```bash
+docker-compose ps
+```
+**Nota:** In caso di modifiche al codice Python, i container si riavviano automaticamente grazie al volume montato. Per fermare tutto:
+```bash
+docker-compose down
+```
+
+### 7.4.1 (Alternativa) Avviare solo l'API REST localmente
+Se preferisci non usare Docker, esegui localmente:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # (su Windows: .venv\Scripts\activate)
+pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 7.5. Configurare la CI/CD con Jenkins
-Aprire Jenkins nel browser: http://localhost:8080
-- Creare un nuovo job di tipo “Pipeline”
-- Collegare il repository GitHub
-- Seleziona il file Jenkinsfile
-- Salva il job
-- Eseguire la pipeline Jenkins cliccando su “Build Now”. Jenkins inizia l’esecuzione delle fasi del Jenkinsfile.
-Se tutto va bene, la pipeline esegue i test, costruisce l’immagine e lancia il deploy; se invece ci sono errori, Jenkins mostra lo stato e i log dettagliati.
-In ogni caso viene notificato via mail l’esito della pipeline. Per configurare il server di posta, accedere a Jenkins, cliccare su “Manage Jenkins” > “Configure System” > “E-mail Notification” e inserire i parametri del server SMTP del proprio provider di posta elettronica.
-In questo modo ogni modifica al codice sorgente del progetto committata su repository, attiverà automaticamente la pipeline CI/CD senza alcun intervento manuale.
+Per prima cosa va configurato il webhook GitHub per triggerare Jenkins automaticamente:
 
-### 7.5. Avviare l'infrastruttura di monitoraggio
-Per avviare Prometheus e Grafana, eseguire il comando:
-```bash
-docker-compose up -d
+**Configurazione Webhook GitHub:**
+1. Accedi al repository su GitHub
+2. Vai a **Settings** > **Webhooks** > **Add webhook**
+3. Inserisci il Payload URL: `http://your-jenkins-server:8080/github-webhook/` 
+4. Content type: seleziona `application/json`
+5. Seleziona **"Push events"** per attivare il webhook su ogni push
+6. Salva il webhook
+
+**Configurazione Pipeline Jenkins:**
+1. Accedi a Jenkins: `http://localhost:8080`
+2. Crea un nuovo elemento di tipo **"Pipeline"** con un nome significativo (es. `Pipeline-Sentiment-Analysis`)
+3. Nella sezione **"Pipeline"** > **"Definition"**, seleziona **"Pipeline script from SCM"**
+4. Scegli **Git** e inserisci l'URL del tuo repository GitHub
+5. Nella sezione **"Script Path"** inserisci `Jenkinsfile` (di default)
+6. Salva il job
+7. Esegui il primo build cliccando su **"Build Now"**
+
+**Notifiche Email:**
+Per ricevere notifiche via mail dell'esito della pipeline:
+1. Accedi a Jenkins
+2. Clicca su **"Manage Jenkins"** > **"Configure System"**
+3. Scorri fino a **"E-mail Notification"**
+4. Configura i parametri SMTP del tuo provider di posta elettronica
+5. Salva
+
+**Da questo momento in poi**, ogni modifica al codice committata su GitHub attiverà automaticamente la pipeline CI/CD senza intervento manuale.
+
+### 7.7. Accesso a Grafana e Visualizzazione Dashboard
+Apri il browser e accedi a:
 ```
-### 7.6. Avviare l'applicazione
-Per avviare l'applicazione, eseguire il comando:
+http://localhost:3000
+```
+Se la dashboard non compare automaticamente:
+1. Vai a **Dashboards** nel menu laterale
+2. Seleziona **"Sentiment Analysis API - Monitoraggio"**
+
+La dashboard mostra in tempo reale:
+- **Errori di Predizione**
+- **Tempo di Risposta**
+- **Utilizzo Memoria**
+- **Utilizzo CPU**
+
+### 7.7. Testare l'API REST
+Effettua una richiesta di predizione utilizzando curl:
 ```bash
-docker build -t sentiment-analysis-api 
-docker run -d -p 8000:8000 sentiment-analysis-api
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"review": "This product is amazing and works perfectly!"}'
 ```
 
-### 7.7. Accesso in Grafana
-Aprire Grafana Apri il browser e vai a:
-http://localhost:3000 inserendo utente e password di default; entrato in grafana, dovrebbe comparire la dashboard di monitoraggio con i 4 grafici principali. 
+Puoi effettuare più chiamate: ogni richiesta genererà metriche visibili in Grafana.
 
-### 7.8 Chiamata all'API REST
-In questo caso faremo una chiamata all’API REST con Curl. Eseguire il comando:
+### 7.8. Consultare i Log
+Per visualizzare i log di ciascun servizio:
 ```bash
-curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" -d '{"review": "This product is amazing and works perfectly!"}'
-```
+# Log dell'API
+docker-compose logs -f api
 
-### 7.9 Visualizzazione dei Grafici in Grafana
-Vai su Grafana e apri la dashboard “Sentiment Analysis API - Monitoraggio”
-Qui dovresti vedere i grafici:
-- Errori di Predizione
-- Tempo di Risposta
-- Utilizzo Memoria
-- Utilizzo CPU
-Questi grafici si aggiornano in base alle richieste fatte all’API.
+# Log di Prometheus
+docker-compose logs -f prometheus
+
+# Log di Grafana
+docker-compose logs -f grafana
+```
 
 ## 8. Struttura e Contenuto dei File di Configurazione
 Il progetto si basa su file di configurazione specifici, ciascuno con un ruolo ben definito all'interno dell'infrastruttura:
