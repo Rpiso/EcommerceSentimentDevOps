@@ -4,7 +4,7 @@
 
 ### Progetto di Roberto Pisoni
 
-##Sommario
+## Sommario
 - [1. Panoramica del Progetto](#1-panoramica-del-progetto)
 - [2. Repository Git](#2-repository-git)
 - [3. Architettura CI/CD (Jenkins)](#3-architettura-cicd-jenkins)
