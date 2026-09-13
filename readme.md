@@ -13,7 +13,8 @@
   - [Esportazione delle Metriche](#esportazione-delle-metriche)
 - [5. Infrastruttura di Monitoraggio](#5-infrastruttura-di-monitoraggio)
 - [6. Istruzioni per la Manutenzione](#6-istruzioni-per-la-manutenzione)
-- [7. Struttura e Contenuto dei File di Configurazione](#7-struttura-e-contenuto-dei-file-di-configurazione)
+- [7. Manuale di Configurazione](#7-manuale-di-configurazione)
+- [8. Struttura e Contenuto dei File di Configurazione](#8-struttura-e-contenuto-dei-file-di-configurazione)
   - [Jenkinsfile](#jenkinsfile)
   - [prometheus.yml](#prometheusyml)
   - [docker-compose.yml](#docker-composeyml)
@@ -73,7 +74,83 @@ Il sistema include uno stack dedicato al monitoraggio proattivo, utile per ident
 * **Configurazione Iniziale:** Il repository contiene tutti gli script necessari; l'intero ecosistema è containerizzato tramite Docker, semplificando l'installazione e la configurazione.
 * **Sviluppo Continuo:** Grazie a Jenkins, ogni successiva modifica al codice verrà automaticamente processata, testata e rilasciata, minimizzando gli interventi manuali di manutenzione.
 
-## 7. Struttura e Contenuto dei File di Configurazione
+## 7. Manuale di Configurazione
+### 7.1. Prerequisiti
+Prima di tutto, assicurarsi che sul computer siano installati:
+- Git
+- Docker
+- Docker Compose
+- Python
+- Curl
+- un editor di testo come VS Code
+
+### 7.2. Scaricare il progetto
+Per semplicità considero`EcommerceSentimentDevOps` la cartella del progetto. Spostarsi nella cartella e scaricare il progetto scegliendo uno dei 2 metodi:
+- **Clonare il repository Git**:
+```bash
+git clone https://github.com/Rpiso/EcommerceSentimentDevOps.git
+```
+- **Usare il file ZIP allegato**: scaricarlo ed estrarlo nella cartella desiderata.
+
+All'interno della cartella del progetto, troverai tutti e 12 i file di configurazione e il codice sorgente necessari per eseguire l'applicazione.
+
+### 7.3 Installare le dipendenze Python
+Usando un ambiente virtuale, eseguire i seguenti comandi per installare le dipendenze Python necessarie:
+```bash
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 7.4. Avviare l'API REST
+Per avviare l’API localmente:
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### 7.5. Configurare la CI/CD con Jenkins
+Aprire Jenkins nel browser: http://localhost:8080
+- Creare un nuovo job di tipo “Pipeline”
+- Collegare il repository GitHub
+- Seleziona il file Jenkinsfile
+- Salva il job
+- Eseguire la pipeline Jenkins cliccando su “Build Now”. Jenkins inizia l’esecuzione delle fasi del Jenkinsfile.
+Se tutto va bene, la pipeline esegue i test, costruisce l’immagine e lancia il deploy; se invece ci sono errori, Jenkins mostra lo stato e i log dettagliati.
+In ogni caso viene notificato via mail l’esito della pipeline. Per configurare il server di posta, accedere a Jenkins, cliccare su “Manage Jenkins” > “Configure System” > “E-mail Notification” e inserire i parametri del server SMTP del proprio provider di posta elettronica.
+In questo modo ogni modifica al codice sorgente del progetto committata su repository, attiverà automaticamente la pipeline CI/CD senza alcun intervento manuale.
+
+### 7.5. Avviare l'infrastruttura di monitoraggio
+Per avviare Prometheus e Grafana, eseguire il comando:
+```bash
+docker-compose up -d
+```
+### 7.6. Avviare l'applicazione
+Per avviare l'applicazione, eseguire il comando:
+```bash
+docker build -t sentiment-analysis-api 
+docker run -d -p 8000:8000 sentiment-analysis-api
+```
+
+### 7.7. Accesso in Grafana
+Aprire Grafana Apri il browser e vai a:
+http://localhost:3000 inserendo utente e password di default; entrato in grafana, dovrebbe comparire la dashboard di monitoraggio con i 4 grafici principali. 
+
+### 7.8 Chiamata all'API REST
+In questo caso faremo una chiamata all’API REST con Curl. Eseguire il comando:
+```bash
+curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" -d '{"review": "This product is amazing and works perfectly!"}'
+```
+
+### 7.9 Visualizzazione dei Grafici in Grafana
+Vai su Grafana e apri la dashboard “Sentiment Analysis API - Monitoraggio”
+Qui dovresti vedere i grafici:
+- Errori di Predizione
+- Tempo di Risposta
+- Utilizzo Memoria
+- Utilizzo CPU
+Questi grafici si aggiornano in base alle richieste fatte all’API.
+
+## 8. Struttura e Contenuto dei File di Configurazione
 Il progetto si basa su file di configurazione specifici, ciascuno con un ruolo ben definito all'interno dell'infrastruttura:
 
 ### `Jenkinsfile`
