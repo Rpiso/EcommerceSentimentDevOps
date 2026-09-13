@@ -35,8 +35,10 @@ L'infrastruttura garantisce scalabilità e affidabilità automatizzando i proces
 
 ## 2. Repository Git
 Il codice sorgente, la pipeline e l'intera documentazione sono gestiti e versionati su Git, come richiesto dagli obiettivi del progetto. 
-Puoi consultare e clonare il repository completo al seguente [link](https://github.com/Rpiso/EcommerceSentimentDevOps)
+Puoi consultare e clonare il repository completo al seguente [link](https://github.com/Rpiso/EcommerceSentimentDevOps).
+
 Per il modello di Sentiment Analysis, ho utilizzato un modello pre-addestrato in lingua inglese, salvato in formato pickle (`sentiment_analysis_model.pkl`), **NON** incluso nel repository.
+
 Per l'avvio manuale dell'applicazione, è necessario scaricare il file del modello dal seguente [link](https://github.com/Profession-AI/progetti-devops/raw/refs/heads/main/Deploy%20e%20monitoraggio%20di%20un%20modello%20di%20sentiment%20analysis%20per%20recensioni/sentiment_analysis_model.pkl) e posizionarlo nella cartella principale del progetto.
 
 ## 3. Architettura CI/CD (Jenkins)
@@ -153,7 +155,7 @@ Per ricevere notifiche via mail dell'esito della pipeline:
 
 **Da questo momento in poi**, ogni modifica al codice committata su GitHub attiverà automaticamente la pipeline CI/CD senza intervento manuale.
 
-### 7.7. Accesso a Grafana e Visualizzazione Dashboard
+### 7.6. Accesso a Grafana e Visualizzazione Dashboard
 Apri il browser e accedi a:
 ```
 http://localhost:3000
@@ -175,7 +177,6 @@ curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \ 
   -d '{"review": "This product is amazing and works perfectly!"}' 
 ```
-
 Puoi effettuare più chiamate: ogni richiesta genererà metriche visibili in Grafana.
 
 ## 8. Struttura e Contenuto dei File di Configurazione
