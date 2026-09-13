@@ -104,14 +104,11 @@ Prima di avviare i servizi, crea un file `.env` nella radice del progetto con le
 GRAFANA_PASSWORD=1234
 ```
 
-**Nota:** Il file `.env` è già incluso nel `.gitignore` per proteggere le credenziali. Non verrà mai committato su GitHub.
-
 ### 7.4. Avviare l'Infrastruttura Completa con Docker Compose
-La soluzione più semplice è avviare tutto (API, Prometheus, Grafana) con un solo comando. Spostarsi nella cartella del progetto e eseguire:
+La soluzione più semplice è avviare tutto (API, Prometheus, Grafana) con un solo comando. Spostarsi nella cartella del progetto ed eseguire:
 ```bash
 docker-compose up -d
 ```
-
 Questo comando avvia tre servizi in background:
 - **API REST** (FastAPI) su `http://localhost:8000`
 - **Prometheus** su `http://localhost:9090` (raccolta metriche)
@@ -124,15 +121,6 @@ docker-compose ps
 **Nota:** In caso di modifiche al codice Python, i container si riavviano automaticamente grazie al volume montato. Per fermare tutto:
 ```bash
 docker-compose down
-```
-
-### 7.4.1 (Alternativa) Avviare solo l'API REST localmente
-Se preferisci non usare Docker, esegui localmente:
-```bash
-python3 -m venv .venv
-source .venv/bin/activate  # (su Windows: .venv\Scripts\activate)
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 7.5. Configurare la CI/CD con Jenkins
@@ -184,24 +172,11 @@ La dashboard mostra in tempo reale:
 Effettua una richiesta di predizione utilizzando curl:
 ```bash
 curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{"review": "This product is amazing and works perfectly!"}'
+  -H "Content-Type: application/json" \ 
+  -d '{"review": "This product is amazing and works perfectly!"}' 
 ```
 
 Puoi effettuare più chiamate: ogni richiesta genererà metriche visibili in Grafana.
-
-### 7.8. Consultare i Log
-Per visualizzare i log di ciascun servizio:
-```bash
-# Log dell'API
-docker-compose logs -f api
-
-# Log di Prometheus
-docker-compose logs -f prometheus
-
-# Log di Grafana
-docker-compose logs -f grafana
-```
 
 ## 8. Struttura e Contenuto dei File di Configurazione
 Il progetto si basa su file di configurazione specifici, ciascuno con un ruolo ben definito all'interno dell'infrastruttura:
@@ -229,6 +204,17 @@ Questo file si occupa dell'orchestrazione dei container dell'intero sistema. Il 
 Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni principali:
 
 - `services`: blocco principale in cui vengono definiti i container (servizi) che devono essere avviati, in questo caso Prometheus e Grafana.  
+- 'sentiment-api': sezione relativa al container dell'API REST.  
+  - `build: .`: Indica a Docker Compose di costruire l'immagine del container partendo dal `Dockerfile` presente nella cartella corrente.
+  - `container_name: sentiment-api`: Assegna il nome "sentiment-api" al container.
+  - `ports`: 
+    - `"8000:8000"`: Mappa la porta 8000 del container sulla porta 8000 del proprio computer, permettendoti di accedere all'API REST.
+  - `volumes`: 
+    - `.:/app`: Monta la cartella corrente (contenente il codice sorgente) all'interno del container, consentendo modifiche in tempo reale senza dover ricostruire l'immagine.
+  - `depends_on`: aspetta che il container di prometheus sia avviato prima di lanciare l'API REST, garantendo che le metriche possano essere raccolte correttamente.
+  - `networks`: 
+    - `monitoring`: Specifica che il container dell'API REST deve essere connesso alla rete "monitoring", la stessa rete a cui sono connessi Prometheus e Grafana, permettendo così la comunicazione tra i container.
+
 - `prometheus`: sezione relativa al container di Prometheus. Questo componente è incaricato di raccogliere costantemente le metriche esposte dall'API (come i tempi di risposta, l'utilizzo di CPU/memoria e gli errori del modello).  
   - `image: prom/prometheus:latest`: Scarica ed esegue l'ultima versione ufficiale dell'ambiente Prometheus.
   - `container_name: prometheus`: Assegna il nome "prometheus" al container.
@@ -238,19 +224,25 @@ Nello specifico, il file `docker-compose.yml` contiene le seguenti sezioni princ
     - `"9090:9090"`: Mappa la porta 9090 del container sulla porta 9090 del proprio computer, permettendoti di accedere all'interfaccia web di Prometheus.
   - `extra_hosts`: 
     - `"host.docker.internal:host-gateway"`: È un'impostazione di rete cruciale. Permette al container isolato di comunicare con la macchina host dove sta girando l'API REST, garantendo che Prometheus riesca a interrogare l'endpoint /metrics.
+  - `networks`: 
+    - `monitoring`: Specifica che il container di Prometheus deve essere connesso alla rete "monitoring", la stessa rete a cui sono connessi l'API e Grafana, permettendo così la comunicazione tra i container.
 - `grafana`: sezione relativa al container di Grafana. Questo componente si interfaccia con i dati di Prometheus per generare e visualizzare dashboard interattive in tempo reale.  
   - `image: grafana/grafana:latest`: Scarica ed esegue l'ultima immagine ufficiale di Grafana.
   - `container_name: grafana`: Assegna il nome "grafana" al container.
   - `ports`: 
     - `"3000:3000"`: Rende accessibile la piattaforma Grafana dal proprio browser tramite la porta 3000.
   - `environment`: 
-    - `GF_SECURITY_ADMIN_PASSWORD=admin`: Inietta una variabile d'ambiente per configurare automaticamente "admin" come password di default per l'amministratore, bypassando il setup iniziale manuale.
+    - `GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}`: la password è recuperata dal file .env
   - `depends_on`: 
     - `prometheus`: Definisce una priorità di avvio. Istruisce Docker a lanciare il container di Grafana solo dopo aver avviato con successo quello di Prometheus, poiché il primo ha bisogno del secondo per funzionare correttamente.
   -  `volumes`: 
     - `./grafana/provisioning/datasource/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml`: monta nel container Docker il file di configurazione del datasource di Grafana.
     - `./grafana/provisioning/dashboard/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboard_provider.yml`: monta nel container Docker il file di configurazione del provider delle dashboard di Grafana.
     - `./grafana/dashboard:/etc/grafana/provisioning/dashboards/json_files`: monta nel container Docker la cartella che conterrà i file JSON dei grafici di Grafana.
+  - `networks`: 
+      - `monitoring`: Specifica che il container di Grafana deve essere connesso alla rete "monitoring", la stessa rete a cui sono connessi l'API e Prometheus, permettendo così la comunicazione tra i container.
+  - `networks`:
+    - `monitoring: driver: bridge`: rete di tipo bridge che permette ai container di comunicare tra loro in modo isolato dal resto della rete del computer host.
 
 ### `Dockerfile`
 Questo file definisce le istruzioni per costruire l'immagine dell'applicazione, operazione che rappresenta il passaggio centrale della fase di Build nella pipeline CI/CD. 

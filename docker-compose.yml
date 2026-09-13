@@ -6,8 +6,6 @@ services:
     container_name: sentiment-api
     ports:
       - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
     depends_on:
